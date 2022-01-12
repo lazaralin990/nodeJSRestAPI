@@ -1,0 +1,267 @@
+https://www.youtube.com/watch?v=bK3AJfs7qNY
+he creado la carpeta 
+abro la carpeta en visual studio 
+lo primero que hago es npm init --yes y eso me crea el file package.json 
+luego instalo los modulos que voy a usar
+npm i express morgan 
+con este comando se me ha creado la carpeta node_modules
+express es un framework de node
+morgan es un modulo que nos prmite ver en la consola las peticiones que van llegando. 
+lo que voy a hacer ahora es crear la carpeta src donde voy a tener el codigo. 
+dentro de src creo un archivo llamado index.js 
+
+en index.js voy a requerir express, lo guardo en una constante express y despues llamo la función y la guardo en la constante app.
+con la constante app puedo empezar a ejecutar mi applicación. 
+
+const express = require ('express');
+const app = express();
+
+app.listen(3000, () => {
+    console.log(`Server on port ${3000}`);
+});
+
+Con eso inicio la applicación y le digo que despues de iniciar la app en servidor 3000, 
+que inicie otra función que lo que haces es loggear en la consola ese mensaje.
+
+Para arrancar, escribimos en la consola node src/index.js 
+Arranca aunque no puede obtener notifications_paused
+
+Tambien tengo que requerir morgan y iniciarlo y pasarle un parametro dev
+const morgan = require('morgan');
+
+//middlewares
+app.use(morgan('dev'));
+
+ahora puedo ver en la consola las peticiones que van llegando. 
+en vez de 'dev' podría usar 'combined' por ejemplo para que nos de mas detalles. 
+
+debido a que vamos a crear una applicación que mande datos en formato json, vamos a 
+tener que hacer que la applicación soporte json asi que importamos: 
+app.use(express.json());
+con esto, express ahora puede entender las peticiones en json. 
+
+tambien podemos recibir datos a traves de formularios, html asi que requerimos
+app.use(express.urlencoded({extended: false}));
+
+podemos guardar tambien el port como una variable de esta forma: 
+app.set('port', 3000);
+y luego lo podemos usar donde sea en la app como:
+app.listen(app.get('port'), () => {
+    console.log(`Server on port ${app.get('port')}`);
+});
+
+para no tener que reiniciar el servidor siempre, voy a instalar nodemon pero solo en development.
+npm i nodemon -D 
+debido  que es solo en development, se ha metido en package.json en:
+ "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+  cuando se instale podemos crear este script para que se ejecute:
+  "dev": "nodemon src/index.js",
+
+en la consola solo habrñia que escribir: npm run dev 
+
+  en el caso de que quiera subir mi app en la nube, a lo mejor tiene que arrancar 
+  a traves de otro puerto. Asi que si hay un puerto definido por el servidor, que arranque allí:
+  por eso le meto esto:
+  app.set('port', process.env.PORT || 3000);
+
+  ahora vamos a empezar a crear el rest api y vamos a tener que definir nuestras rutas. 
+app.get('/', (req, res) => {
+    res.send('Hello World');
+});
+
+le doy npm run dev a ver que pasa.
+Funciona, me muestra Hello World y en la consola me da 200. 
+Vamos ahora a cambiarle el formato, a hacerlo un objeto json. 
+
+le cambio de res.send a res.json y lo meto como si fuera un objeto ({}).
+Tambien añado app.set('json spaces', 2); para que se vea mejor el formato.
+app.get('/', (req, res) => {
+    res.json({"Title": "Hello world"});
+});
+
+debido a que vamos a tener muchas rutas como la de arriba, vamos a crear una carpeta Routes
+y dentro creamos un archivo index.js donde colocaremos las rutas. 
+
+importamos el modulo Routes de express, lo guardamos en una constante y llamamos ese mismo modulo y lo guardamos en otra constante.
+luego, con esa constante, creamos la ruta.
+Luego, exportamos. 
+const { Router } = require('express');
+const router = Router();
+router.get('/', (req, res) => {
+    res.json({"Title": "Hello world"});
+});
+module.exports = router;
+
+y para usarla en index.js, tenemos que usar lo que recibimos de ese fichero. El codigo es: 
+app.use(require('./routes/index'));
+
+tambien se pueden guardar los datos en una variable y cambiar la ruta como aquí:
+
+router.get('/test', (req, res) => {
+    const data = {
+        "name": "Fazt",
+        "website": "faztweb.com"
+    };
+    res.json(data);
+});
+me he quedado en 31:06 
+
+acabo de crear un sample.json file donde tengo datos.
+tmb creo otra ruta llamada movies.js 
+const { Router } = require('express');
+const router = Router();
+router.get('/movies', (req, res) => {
+    res.send('movies');
+});
+module.exports = router;
+
+normalmente las rutas son /api/movies... asi que lo que hago será quitar /movies y poner esto en index.js:
+//routes
+app.use(require('./routes/index'));
+app.use('/api/movies', require('./routes/movies'));
+
+ahora importamos el sample.json en movies.js y funciona bien:
+const { Router } = require('express');
+const router = Router();
+
+const movies = require('../sample.json');
+
+router.get('/', (req, res) => {
+    res.json(movies);
+});
+
+module.exports = router;
+
+descargo Postman 
+le hago un get a 3000/api/movie y funciona.
+
+ahora vamos a por el POST. En routes, creo esto: 
+router.post('/', (req, res) => {
+    console.log(req.body);
+    res.send('received');
+});
+
+y si voy a Postman, hago un POST con 
+Headers; Content-type: Application/json
+Body: {
+    "test": "From an mobile application"
+}
+
+y va bien. 
+
+Lo que voy a hacer ahora es guardar en constante lo que me manda el json.
+Le digo que en la const title se guarde el title, en la const director se guarde el director,
+etc... 
+También le digo que sean mandatory esos 4 para guardarlos, sino le decimos wrong request. 
+
+router.post('/', (req, res) => {
+    const {title, director, year, rating} = req.body;
+    if(title && director && year && rating) {
+        res.json('saved');
+    } else {
+        res.send('Wrong Request');
+    }
+});
+
+y va bien.
+Me he quedado en el 49:40. 
+
+lo que voy a hacer ahora será guardar en una constante los datos del req.body.
+        const newMovie = {...req.body};
+los ... significan guardar todos los datos del req.body 
+
+tambien le tenemos que dar un id y juntarlo al request.
+        const id = movies.length + 1;
+        const newMovie = {...req.body, id};
+
+54:30 
+podemos tambien dar mas informacion en cuanto al error que se genera. por ejemplo
+podemos poner el codigo del error: 
+else {
+        res.status(500).json({error: 'There was an error.'});
+    }
+
+vamos ahora a empezar con el metodo delete 
+vamos primero a ver que recibimos en la consola con req.params 
+
+router.delete('/:id', (req, res) => {
+    console.log(req.params);
+    res.send('deleted');
+})
+
+y cuando desde postman mandamos un delete request a api/movies/3 por ejemplo, en la consola
+vemos { id: '3' }
+
+ahora, para poder recorrer un objeto y borrarlo, vamos a instalar 
+una biblioteca llamada underscore 
+npm i underscore 
+
+la tengo que requerir en movies.js 
+const _ = require('underscore');
+
+voy a escribir la función que mas o menos será que en each movie, donde i sea igual al id,
+borrar. 
+
+router.delete('/:id', (req, res) => {
+    const { id } = req.params;
+    _.each(movies, (movie, i) => {
+        if(movie.id == id){
+            movies.splice(i, 1);
+        }
+    })
+    res.send(movies);
+})
+
+vamos a hora a ver el metodo PUT.
+
+router.put es una combination entre delete y post.
+le sigo pasando el id, pero tambien guardo todas las constantes del request y las modifico uno a uno. 
+
+router.put('/:id', (req, res) => {
+    const { id } = req.params;
+    const {title, director, year, rating} = req.body;
+    if(title && director && year && rating) {
+        _.each(movies, (movie, i) => {
+            if(movie.id == id){
+                movie.title = title;
+                movie.director = director;
+                movie.year = year;
+                movie.rating = rating;
+            }
+        });
+        res.json(movies);
+    } else {
+        res.status(500).json({error: 'There was an error'});
+    }
+});
+
+y desde postman, si modifico , va bien. 
+
+el ultimo ejemplo. vamos a captar datos de otro api y hacerlos visible en nuestro api.
+de aquí: http://jsonplaceholder.typicode.com/users
+
+creamos users.js, creamos el metodo get. 
+
+vamos ahora a instalar un modulo llamado node-fetch para poder captar los datos de esa pagina. 
+npm i node-fetch 
+este modulo podremos utilizarlo para hacer una peticion CRUD a otro servicio desde node.js 
+
+router.get('/', async (req, res) => {
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+    fetch('http://jsonplaceholder.typicode.com/users')
+      .then(response => response.json())
+      .then(data =>{
+        res.json(data);
+        console.log(data);
+      })
+      .catch(function(error) {
+        console.log('Hubo un problema con la petición Fetch:' + error.message);
+      });
+});
+
+y con esto acabamos. 
+
+Siguiente video: https://www.youtube.com/watch?v=p8CoR-wymQg&t=0s
+
